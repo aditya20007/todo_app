@@ -9,24 +9,42 @@ login_manager.login_view = "auth.login"
 
 def create_app():
     app = Flask(__name__, static_folder="../static", template_folder="../templates")
+    
+    # Secret key for sessions
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-this-secret")
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(base_dir, "..", "todo.db")
+
+    # Use Neon PostgreSQL if DATABASE_URL is set
+    database_url = os.environ.get("DATABASE_URL")
+
+    if database_url:
+        # Render may prefix the database URL with 'postgres://'
+        # SQLAlchemy needs 'postgresql://'
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    else:
+        # Local fallback SQLite (development)
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(base_dir, "..", "todo.db")
+
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
     login_manager.init_app(app)
 
-    # import models to register with SQLAlchemy
+    # Import models to register with SQLAlchemy
     from . import models
 
+    # Create tables if they do not exist
     with app.app_context():
         db.create_all()
-        # seed demo data if empty
+
+        # Seed demo data only if empty
         if models.Category.query.count() == 0:
             seed_demo(models, db)
 
-    # register blueprints
+    # Register blueprints
     from .routes.auth import auth_bp
     from .routes.tasks import tasks_bp
 
