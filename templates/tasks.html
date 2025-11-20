@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Tasks — Wow Todo{% endblock %}
+{% block content %}
+<div class="dashboard">
+
+  <!-- SIDEBAR: categories -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <h3>Categories</h3>
+      <button id="clearFilter" class="btn small">Clear</button>
+    </div>
+
+    <div class="category-list-wrap" id="categoryListWrap">
+      <ul class="category-list">
+        {% for c in categories %}
+          <li class="category-item" data-cat-id="{{ c.id }}" style="--cat-color: {{ c.color or 'unset' }};">
+            <button class="cat-btn" aria-pressed="false">
+              <span class="cat-name">{{ c.name }}</span>
+              <span class="cat-count">({{ c.count() }})</span>
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <section class="panel">
+    <div class="panel-header">
+      <h2>My Tasks</h2>
+      <div class="panel-controls">
+        <select id="filterSelect" class="filter-select" aria-label="Filter tasks">
+          <option value="all">All</option>
+          <option value="done">Completed</option>
+          <option value="pending">Pending</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ADD TASK -->
+    <div class="card add-card">
+      <form method="POST" action="{{ url_for('tasks.add_task') }}" class="add-form">
+        <input name="title" placeholder="New task title" required>
+        <input name="description" placeholder="Optional description">
+        <select name="category_id" aria-label="Category select">
+          <option value="">No category</option>
+          {% for c in categories %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+        <div class="add-actions">
+          <button class="btn primary" type="submit">Add Task</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- TASKS -->
+    <ul id="taskList" class="task-list">
+      {% if tasks %}
+        {% for t in tasks %}
+          <li class="task-item {% if t.done %}done{% endif %}" data-cat-id="{{ t.category.id if t.category else '' }}">
+            <form method="POST" action="{{ url_for('tasks.toggle_task', task_id=t.id) }}" class="inline toggle-form">
+              <button class="check" aria-label="Toggle done">{{ '✓' if t.done else '' }}</button>
+            </form>
+
+            <div class="task-body">
+              <div class="task-title">{{ t.title }}</div>
+              {% if t.description %}<div class="task-desc">{{ t.description }}</div>{% endif %}
+              {% if t.category %}
+                <span class="task-tag" data-cat="{{ t.category.id }}" style="background: {{ t.category.color or '' }};">
+                  {{ t.category.tag or t.category.name }}
+                </span>
+              {% endif %}
+            </div>
+
+            <div class="task-actions">
+              <a class="btn-link" href="{{ url_for('tasks.edit_task', task_id=t.id) }}">Edit</a>
+              <form method="POST" action="{{ url_for('tasks.delete_task', task_id=t.id) }}" onsubmit="return confirm('Delete this task?');">
+                <button class="btn-link" type="submit">Delete</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      {% else %}
+        <li class="empty-state">
+          <img src="/mnt/data/711a35e6-34d1-48ef-a641-c27b5144a1f7.png" alt="No tasks yet">
+          <p>No tasks yet — add one using the form above!</p>
+        </li>
+      {% endif %}
+    </ul>
+
+    <div class="stats-bar">
+      <div>Total: {{ tasks|length }}</div>
+      <div>Completed: {{ tasks|selectattr('done')|select|list|length }}</div>
+      <div>Pending: {{ tasks|selectattr('done')|reject|list|length }}</div>
+    </div>
+  </section>
+</div>
+{% endblock %}

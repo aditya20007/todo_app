@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{% block title %}Wow Todo List{% endblock %}</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- HEADER (Style A: minimal green bar, inline nav) -->
+  <header class="topbar">
+    <div class="wrapper nav-row">
+      <a class="brand" href="{{ url_for('tasks.view_tasks') }}" aria-label="Home">
+        <span class="brand-mark">WT</span>
+        <span class="brand-text">Wow <strong>Todo</strong></span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="{{ url_for('tasks.view_tasks') }}">Home</a></li>
+
+        {% if not current_user.is_authenticated %}
+          <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+          <li><a href="{{ url_for('auth.register') }}">Register</a></li>
+        {% else %}
+          <li><a href="{{ url_for('tasks.view_tasks') }}">Tasks</a></li>
+          <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+        {% endif %}
+      </ul>
+
+      <div class="nav-actions">
+        <button id="theme-toggle" class="btn theme-toggle" aria-label="Toggle theme">Dark</button>
+        <button id="mobile-menu" class="btn mobile-menu" aria-label="Open menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main wrapper">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+          {% for category, message in messages %}
+            <li class="flash {{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="wrapper footer-row">
+      <div>© 2025 Wow Todo List.</div>
+      <div>Built with ❤️ by Aditya Singh</div>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
